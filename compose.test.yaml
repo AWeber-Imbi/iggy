@@ -1,0 +1,93 @@
+name: imbi-iggy-test
+
+services:
+  iggy:
+    image: ghcr.io/aweber-imbi/iggy:dev
+    build: .
+    ports:
+      - 3000
+      - 8090
+    environment:
+      IGGY_MODE: server
+      IGGY_ROOT_USERNAME: iggy
+      IGGY_ROOT_PASSWORD: iggy
+      IGGY_HTTP_ENABLED: true
+      IGGY_HTTP_ADDRESS: 0.0.0.0:3000
+      IGGY_TCP_ENABLED: true
+      IGGY_TCP_ADDRESS: 0.0.0.0:8090
+      # The server pins each shard to a core and binds its memory to that
+      # core's NUMA node. mbind() is unsupported in the Docker Desktop VM,
+      # so every shard fails to start there. Unpinning drops both bindings.
+      IGGY_SYSTEM_SHARDING_PIN_CORES: false
+    cap_add:
+      - SYS_NICE
+    security_opt:
+      - seccomp:unconfined
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD", "iggy", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - 8123
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: imbi
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse client -q 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Stands in for the imbi-api connector configuration endpoints. It
+  # serves the exact JSON shape the runtime's http provider expects, so
+  # this compose file proves the contract before imbi-api implements it.
+  config-server:
+    image: python:3.14-slim
+    ports:
+      - 8080
+    volumes:
+      - ./test/config_server.py:/srv/config_server.py:ro
+    command: ["python", "/srv/config_server.py"]
+    environment:
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_DATABASE: imbi
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: password
+      API_KEY: test-api-key
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  iggy-connect:
+    image: ghcr.io/aweber-imbi/iggy:dev
+    build: .
+    ports:
+      - 8081
+    environment:
+      IGGY_MODE: connectors
+      IGGY_CONNECTORS_CONNECTORS_BASE_URL: http://config-server:8080
+      IGGY_CONNECTORS_API_KEY: test-api-key
+      IGGY_CONNECTORS_IGGY_ADDRESS: iggy:8090
+      IGGY_CONNECTORS_IGGY_USERNAME: iggy
+      IGGY_CONNECTORS_IGGY_PASSWORD: iggy
+    # The sink joins a consumer group on a topic that must already exist,
+    # so a first start before test/e2e.sh creates events/gateway exits.
+    restart: on-failure
+    depends_on:
+      iggy:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy

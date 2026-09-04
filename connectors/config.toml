@@ -1,0 +1,52 @@
+# Connectors runtime configuration for Imbi.
+#
+# Sink definitions are not shipped in this image. The runtime fetches them
+# from imbi-api over HTTP at startup, through the runtime's own "http"
+# configuration provider. connectors/README.md carries the contract that
+# API has to implement.
+#
+# Every value below can be overridden at runtime with an
+# IGGY_CONNECTORS_<SECTION>_<KEY> environment variable. base_url is left
+# empty here so the image carries no environment-specific URL; the
+# entrypoint requires IGGY_CONNECTORS_CONNECTORS_BASE_URL instead.
+
+[http]
+enabled = true
+address = "0.0.0.0:8081"
+api_key = ""
+
+[http.metrics]
+enabled = true
+endpoint = "/metrics"
+
+[iggy]
+address = "iggy:8090"
+username = "iggy"
+password = "iggy"
+token = ""
+
+[state]
+path = "/var/lib/iggy-connectors/state"
+storage = "file"
+
+[connectors]
+config_type = "http"
+base_url = ""
+timeout = "10s"
+
+# The API key cannot be baked into the image, and request_headers is the
+# one provider setting the runtime does not read from the environment.
+# The entrypoint copies this file to a writable location and substitutes
+# the placeholder from IGGY_CONNECTORS_API_KEY. Never put a real key here.
+[connectors.request_headers]
+Authorization = "Bearer @@IGGY_CONNECTORS_API_KEY@@"
+
+[connectors.retry]
+enabled = true
+max_attempts = 3
+initial_backoff = "1s"
+max_backoff = "30s"
+backoff_multiplier = 2
+
+[logging]
+format = "text"

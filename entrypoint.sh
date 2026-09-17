@@ -39,6 +39,7 @@ render_config() {
 
 case "${IGGY_MODE:-server}" in
     server)
+        unset IGGY_MODE
         exec iggy-server "$@"
         ;;
     connectors)

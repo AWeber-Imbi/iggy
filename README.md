@@ -21,19 +21,18 @@ contract that API implements.
 
 | What                      | Pin                                                                        |
 | ------------------------- | -------------------------------------------------------------------------- |
-| Server base image         | `apache/iggy:0.9.0-edge.6`                                                  |
-| Server image digest       | `sha256:aafc890249616591791c775b4ea04eb9f01292306524decd031d451980061b0c`   |
-| Upstream commit           | `996ac04c874da857d6d734db4f27ada344e5585d`                                  |
-| Connectors runtime crate  | `iggy-connectors` 0.5.0-edge.5, built here                                   |
+| Server base image         | `apache/iggy:0.9.0-edge.8`                                                  |
+| Server image digest       | `sha256:dd37af9195a8008a566c49d260ad2a7264fb0cdf1a18de54e16b721cdea26ee8`   |
+| Upstream commit           | `e0027506f2a0379ee3bb5508427ff570e3a9a435`                                  |
+| Connectors runtime crate  | `iggy-connectors` 0.5.0-edge.6, built here                                   |
 | ClickHouse sink crate     | `iggy_connector_clickhouse_sink` 0.2.0-edge.4, built here                    |
 | Rust toolchain            | `rust:1.98.0-trixie` (Debian 13, glibc 2.41, matching the base image)        |
 
 The commit comes from the `org.opencontainers.image.revision` label on
-`apache/iggy:0.9.0-edge.6`. The published `apache/iggy-connect:0.5.0-edge.6`
-image carries a different revision (`dc1cdf23209c91fd703b59ceb47bdb9b4c662480`),
-so its `iggy-connectors` binary is not copied in. The plugin FFI is not
-versioned, so the runtime and the plugin are both compiled from the
-server's commit instead.
+`apache/iggy:0.9.0-edge.8`. The published `apache/iggy-connect` image does
+not publish an `0.5.0-edge.8` tag, so its `iggy-connectors` binary cannot be
+copied in regardless. The plugin FFI is not versioned, so the runtime and
+the plugin are both compiled from the server's commit instead.
 
 ## Pulling the image
 

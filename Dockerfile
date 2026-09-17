@@ -10,7 +10,7 @@
 # the runtime is compiled here as well. The plugin FFI is not versioned;
 # server, runtime and plugin must come from one commit.
 
-ARG IGGY_COMMIT=996ac04c874da857d6d734db4f27ada344e5585d
+ARG IGGY_COMMIT=e0027506f2a0379ee3bb5508427ff570e3a9a435
 ARG RUST_VERSION=1.98.0
 
 FROM rust:${RUST_VERSION}-trixie AS rust
@@ -40,7 +40,7 @@ RUN --mount=type=cache,id=cargo-registry-${TARGETARCH},target=/usr/local/cargo/r
  && cp target/release/iggy-connectors /out/bin/ \
  && cp target/release/libiggy_connector_clickhouse_sink.so /out/lib/
 
-FROM apache/iggy:0.9.0-edge.6@sha256:aafc890249616591791c775b4ea04eb9f01292306524decd031d451980061b0c
+FROM apache/iggy:0.9.0-edge.8@sha256:dd37af9195a8008a566c49d260ad2a7264fb0cdf1a18de54e16b721cdea26ee8
 
 # The upstream server image carries no CA certificates. The ClickHouse
 # sink builds a reqwest client at startup, and reqwest's rustls backend

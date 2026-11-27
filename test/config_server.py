@@ -38,7 +38,7 @@ EVENTS_SINK = {
             'avro_schema_json': None,
             'avro_schema_path': None,
             'batch_length': 1000,
-            'poll_interval': '250ms',
+            'max_wait': '250ms',
             'consumer_group': 'events',
         }
     ],

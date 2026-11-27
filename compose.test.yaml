@@ -15,10 +15,11 @@ services:
       IGGY_HTTP_ADDRESS: 0.0.0.0:3000
       IGGY_TCP_ENABLED: true
       IGGY_TCP_ADDRESS: 0.0.0.0:8090
+      IGGY_NODE_ADVERTISED_ADDRESS: iggy
       # The server pins each shard to a core and binds its memory to that
       # core's NUMA node. mbind() is unsupported in the Docker Desktop VM,
       # so every shard fails to start there. Unpinning drops both bindings.
-      IGGY_SYSTEM_SHARDING_PIN_CORES: false
+      IGGY_SHARDING_PIN_CORES: false
     cap_add:
       - SYS_NICE
     security_opt:

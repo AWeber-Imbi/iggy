@@ -124,6 +124,9 @@ labels the configuration for the runtime's
 Same rule: the `Option` fields are required to be present, so send `null`
 where there is no value.
 
+Send `max_wait` (default 1s), never `poll_interval`: since `iggy-connectors`
+0.6.0 a sink stream that sets `poll_interval` fails to start.
+
 ```json
 {
   "stream": "events",
@@ -132,7 +135,7 @@ where there is no value.
   "avro_schema_json": null,
   "avro_schema_path": null,
   "batch_length": 1000,
-  "poll_interval": "250ms",
+  "max_wait": "250ms",
   "consumer_group": "events"
 }
 ```

@@ -21,18 +21,18 @@ contract that API implements.
 
 | What                      | Pin                                                                        |
 | ------------------------- | -------------------------------------------------------------------------- |
-| Server base image         | `apache/iggy:0.9.0-edge.8`                                                  |
-| Server image digest       | `sha256:dd37af9195a8008a566c49d260ad2a7264fb0cdf1a18de54e16b721cdea26ee8`   |
-| Upstream commit           | `e0027506f2a0379ee3bb5508427ff570e3a9a435`                                  |
-| Connectors runtime crate  | `iggy-connectors` 0.5.0-edge.6, built here                                   |
-| ClickHouse sink crate     | `iggy_connector_clickhouse_sink` 0.2.0-edge.4, built here                    |
-| Rust toolchain            | `rust:1.98.0-trixie` (Debian 13, glibc 2.41, matching the base image)        |
+| Server base image         | `apache/iggy:0.10.0`                                                        |
+| Server image digest       | `sha256:176125a0580f526b0fee8b98ccf4ed5f77e243066183243d87282abce4851bf3`   |
+| Upstream commit           | `1fb58a67d382b9a997573ab04d102565362b8afa`                                  |
+| Connectors runtime crate  | `iggy-connectors` 0.6.0, built here                                         |
+| ClickHouse sink crate     | `iggy_connector_clickhouse_sink` 0.3.0, built here                          |
+| Rust toolchain            | `rust:1.99.1-trixie` (Debian 13, glibc 2.41, matching the base image)        |
 
 The commit comes from the `org.opencontainers.image.revision` label on
-`apache/iggy:0.9.0-edge.8`. The published `apache/iggy-connect` image does
-not publish an `0.5.0-edge.8` tag, so its `iggy-connectors` binary cannot be
-copied in regardless. The plugin FFI is not versioned, so the runtime and
-the plugin are both compiled from the server's commit instead.
+`apache/iggy:0.10.0`, not from the `server-0.10.0` git tag, which points at
+an earlier commit. `apache/iggy-connect:0.6.0` carries the same label. The plugin FFI is
+not versioned, so the runtime and the plugin are both compiled here from
+the server's commit.
 
 ## Pulling the image
 
@@ -46,7 +46,7 @@ Multi-architecture builds are available for `linux/amd64` and
 docker pull ghcr.io/aweber-imbi/iggy:latest
 
 # Specific git tag
-docker pull ghcr.io/aweber-imbi/iggy:0.9.0-edge.6-0
+docker pull ghcr.io/aweber-imbi/iggy:0.10.0-0
 ```
 
 Tags follow `<upstream server version>-<n>`, where `n` increments for each
@@ -57,7 +57,7 @@ change to this repository against the same upstream server version.
 ```yaml
 services:
   iggy:
-    image: ghcr.io/aweber-imbi/iggy:0.9.0-edge.6-0
+    image: ghcr.io/aweber-imbi/iggy:0.10.0-0
     ports:
       - 3000
       - 8090
@@ -68,6 +68,7 @@ services:
       IGGY_HTTP_ADDRESS: 0.0.0.0:3000
       IGGY_TCP_ENABLED: true
       IGGY_TCP_ADDRESS: 0.0.0.0:8090
+      IGGY_NODE_ADVERTISED_ADDRESS: iggy
     cap_add:
       - SYS_NICE
     security_opt:
@@ -83,7 +84,7 @@ services:
       retries: 10
 
   iggy-connect:
-    image: ghcr.io/aweber-imbi/iggy:0.9.0-edge.6-0
+    image: ghcr.io/aweber-imbi/iggy:0.10.0-0
     environment:
       IGGY_MODE: connectors
       IGGY_CONNECTORS_CONNECTORS_BASE_URL: http://imbi-api:8000/iggy/connectors
@@ -161,8 +162,10 @@ Unchanged from the base image. The ones Imbi's Compose sets:
 - `IGGY_ROOT_USERNAME`, `IGGY_ROOT_PASSWORD` — the root user created on
   first start
 - `IGGY_TCP_ENABLED`, `IGGY_TCP_ADDRESS` — the TCP transport, `0.0.0.0:8090`
+- `IGGY_NODE_ADVERTISED_ADDRESS` — the host clients dial; required when
+  `IGGY_TCP_ADDRESS` binds `0.0.0.0`, or the server refuses to boot
 - `IGGY_HTTP_ENABLED`, `IGGY_HTTP_ADDRESS` — the HTTP API, `0.0.0.0:3000`
-- `IGGY_SYSTEM_SHARDING_PIN_CORES` — see below
+- `IGGY_SHARDING_PIN_CORES` — see below
 
 #### Running on Docker Desktop
 
@@ -172,7 +175,7 @@ the Docker Desktop virtual machine, so every shard fails and the server
 exits with `ShardJoinFailures ... MemoryAffinityFailed`. This is upstream
 behaviour; `apache/iggy:0.9.0-edge.6` fails the same way on its own.
 
-Set `IGGY_SYSTEM_SHARDING_PIN_CORES=false` to drop both the CPU and the
+Set `IGGY_SHARDING_PIN_CORES=false` to drop both the CPU and the
 memory-node binding. `compose.test.yaml` sets it, and Imbi's `compose.yaml`
 and `compose.ci.yaml` need it too. Leave it unset on a Linux host, where
 pinning is what you want.
@@ -184,7 +187,7 @@ this repository. It answers `GET /configs/active` with one sink per
 ClickHouse-bound stream, where the stream name, the consumer group name
 and the ClickHouse table name are the same string, and where each sink
 sets `schema = "json"`, `insert_format = "json_each_row"`,
-`batch_length = 1000` and `poll_interval = "250ms"`.
+`batch_length = 1000` and `max_wait = "250ms"`.
 
 `imbi.common.iggy.TOPICS` in the Imbi repository is the source of both
 that response and the publisher's topic list, so the two cannot drift.

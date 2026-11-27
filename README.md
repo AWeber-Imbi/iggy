@@ -189,6 +189,11 @@ and the ClickHouse table name are the same string, and where each sink
 sets `schema = "json"`, `insert_format = "json_each_row"`,
 `batch_length = 1000` and `max_wait = "250ms"`.
 
+This image requires that imbi-api sends `max_wait` for each sink and does
+not send `poll_interval`. A sink that sets `poll_interval` does not start.
+Deploy the imbi-api change that sends `max_wait` before you deploy this
+image.
+
 `imbi.common.iggy.TOPICS` in the Imbi repository is the source of both
 that response and the publisher's topic list, so the two cannot drift.
 

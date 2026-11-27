@@ -194,6 +194,18 @@ not send `poll_interval`. A sink that sets `poll_interval` does not start.
 Deploy the imbi-api change that sends `max_wait` before you deploy this
 image.
 
+### Upgrading from 0.9.x
+
+0.10.0 changes the storage format, the snapshot format (13) and the wire
+protocol (0.12.0). There is no in-place migration. Do these steps in this
+sequence:
+
+1. Deploy the imbi-api change that sends `max_wait`.
+2. Let the ClickHouse sink consume all messages that remain.
+3. Stop the server and delete its data volume.
+4. Deploy this image.
+5. Use `apache-iggy` 0.10.0 clients. Older clients cannot connect.
+
 `imbi.common.iggy.TOPICS` in the Imbi repository is the source of both
 that response and the publisher's topic list, so the two cannot drift.
 

@@ -201,10 +201,12 @@ protocol (0.12.0). There is no in-place migration. Do these steps in this
 sequence:
 
 1. Deploy the imbi-api change that sends `max_wait`.
-2. Let the ClickHouse sink consume all messages that remain.
-3. Stop the server and delete its data volume.
-4. Deploy this image.
-5. Use `apache-iggy` 0.10.0 clients. Older clients cannot connect.
+2. Stop all publishers. Keep them stopped until step 6 is complete.
+3. Let the ClickHouse sink consume all messages that remain.
+4. Stop the server and delete its data volume.
+5. Deploy this image.
+6. Use `apache-iggy` 0.10.0 clients. Older clients cannot connect.
+7. Start the publishers again.
 
 `imbi.common.iggy.TOPICS` in the Imbi repository is the source of both
 that response and the publisher's topic list, so the two cannot drift.
